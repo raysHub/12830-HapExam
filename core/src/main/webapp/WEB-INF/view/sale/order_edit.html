@@ -1,0 +1,388 @@
+<#--
+        * description: 订单明细编辑对话框
+        *
+        -->
+<#include "../include/header.html">
+
+<body>
+<script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/common/code?saleOrderStatusdata=HAP_OM_ORDER_STATUS" type="text/javascript"></script>
+<script type="text/javascript">
+    var viewModel = kendo.observable({
+        model: {},
+        source:saleOrderStatusdata,
+        save: function(e){
+            var data= viewModel.model.toJSON();
+//            确定是添加还是更新
+            if(data.headerId){
+//                   *********************************unknown************************************************
+                data.__status = "update";
+            }else{
+                data.__status = "add";
+            }
+            var validator = $("#headerForm").data("kendoValidator");
+            if (validator.validate()) {
+                //var data= viewModel.model.toJSON();
+                $.ajax({
+                    type   : 'POST',
+                    url    : '${base.contextPath}/sale/order/submit',
+                    dataType : "json",
+                    contentType : "application/json",
+                    data   : kendo.stringify([data]),
+                    success: function (data) {
+                        if(data.success==false){
+                            kendo.ui.showErrorDialog({
+                                message:data.message
+                            });
+                        }
+                        else{
+                            window.parent.$("#dialog").data("kendoWindow").close();
+                        }
+                    }
+                });
+            }
+        },
+        createFunction:function(){
+            $('#mainGrid').data('kendoGrid').addRow();
+        },
+        closeWin: function(){
+            window.parent.$("#dialog").data("kendoWindow").close();
+        },
+
+        delete: function(e){
+
+        }
+    });
+
+    var headerId = '${RequestParameters.headerId!0}';
+
+    if (headerId!=0) {
+        $.ajax({
+            type   : 'POST',
+            url: '${base.contextPath}/sale/order/query?headerId='+headerId,
+            success: function (args) {
+//                *********************************unknown************************************************
+                var a0 = args.rows[0] || {};
+
+                for (var k in a0) {
+                    if(k == "companyName"){
+                        $('#companyName').data("kendoLov").text(a0[k]);
+                    }else if(k == "customerName"){
+                        $('#customerName').data("kendoLov").text(a0[k]);
+                    }else if(k == "orderStatus"){
+                        $.each(saleOrderStatusdata,function(i,n){
+                            if((n.value||'').toLowerCase() == (a0[k]||'').toLowerCase()){
+                                $('#orderStatus').val(n.meaning);
+                            }
+                        })
+                    }else{
+                        viewModel.model.set(k, a0[k]);
+                    }
+                }
+            }
+        });
+    }
+    checkButtonPermission();
+</script>
+
+<div class="container" style="margin-left: -10px;">
+    <div id="page-content">
+        <div id="top" style="padding: 0;">
+            <form class="form-horizontal" id="headerForm" method="post">
+                <!-- 第一行form -->
+                <div class="row" style="margin-bottom: 10px;">
+                    <div class="col-sm-4" style="margin-left: -6px">
+                        <div class="form-group">
+                            <label for="orderNumber" class="col-sm-4 control-label"><@spring.message "sale.ordernumber"/></label>
+                            <div class="col-sm-8">
+                                <input required style="width: 100%" id="orderNumber" data-bind="value:model.orderNumber" type="text" class="k-textbox">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4" style="margin-left: -15px">
+                        <div class="form-group">
+                            <label for="companyName" class="col-sm-4 control-label"><@spring.message "sale.companyName"/></label>
+                            <div class="col-sm-8">
+                                <input required style="width: 100%" id="companyName" data-bind="value:model.companyName" type="text">
+                                <script>
+                                    $("#companyName").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "LOV_COMPANY")}))
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4" style="margin-left: -30px">
+                        <div class="form-group">
+                            <label for="customerName" class="col-sm-4 control-label"><@spring.message "sale.customername"/></label>
+                            <div class="col-sm-8">
+                                <input required id="customerName" type="text" style="width: 100%" data-bind="value:model.customerName">
+                                <script>
+                                    $("#customerName").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "LOV_SALE_CUSTOMER")}))
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 第二行form -->
+                <div class="row ">
+                    <div class="col-sm-4" style="margin-left: -6px">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label"><@spring.message "sale.orderdate"/>:</label>
+                            <div class="col-sm-8">
+                                <input required style="width:100%" name="orderDate" data-bind="value:model.orderDate" class="datepicker">
+                            </div>
+                            <div class="col-sm-8">
+                                <span data-for="orderDate" class=".k-invalid-msg"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4" style="margin-left: -15px">
+                        <div class="form-group">
+                            <label for="orderAmount" class="col-sm-4 control-label"><@spring.message "sale.orderamount"/></label>
+                            <div class="col-sm-8">
+                                <input style="width: 100%" id="orderAmount" data-bind="value:model.orderAmount" type="text" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4" style="margin-left: -30px;">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label"><@spring.message "sale.orderstatus"/></label>
+                            <div class="col-sm-6">
+                                <input style="width: 100%" id="orderStatus" name="orderStatus" data-bind="value:model.orderStatus" type="text" disabled>
+                            </div>
+                            <div class="col-sm-5" >
+                                <span data-for="orderStatus" class=".k-invalid-msg"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="row" style="margin-top: 10px; margin-left: -20px;">
+                <div class="col-sm-9">
+                    <span id="submit" class="btn btn-success" data-bind="click:save" type="submit"><@spring.message "hap.submit"/></span>
+                    <span id="approve" class="btn btn-primary" style="float:left;margin-right:5px;" data-bind="click:save"><@spring.message "sale.approve"/></span>
+                    <span id="reject" class="btn btn-primary" type="button" data-bind="click:save"><@spring.message "sale.reject"/></span>
+                    <span id="delete" class="btn btn-danger" type="button" data-bind="click:delete"><@spring.message "hap.delete"/></span>
+                    <span class="btn btn-danger" type="button" data-bind="click:closeWin"><@spring.message "hap.back"/></span>
+                    <span id="print" class="btn btn-default" style="margin-right:5px;"
+                          data-bind=""><@spring.message "hap.exportexcel"/></span>
+                </div>
+            </div>
+        </div>
+        <div id="lines" class="col-sm-12" style="padding-left:0px; margin-top: 20px; clear: both; position: absolute; float: left" >
+            <ul class="nav nav-tabs" id="mytab">
+                <li class="active"><a href="#main" data-toggle="tab"><@spring.message "hap.main"/></a></li>
+                <li class=""><a href="#other" data-toggle="tab"><@spring.message "hap.other"/></a></li>
+            </ul>
+            <div id="linesTabContent" class="tab-content">
+                <div class="tab-pane fade in active" style="margin-top: 10px;" id="main">
+                    <div class="row"  style="margin-top: 10px;">
+                        <div class="col-sm-10" id="toolbar-btn">
+                            <span type="button" class="btn btn-primary" style="float:left;margin-right:5px" data-bind="click:createFunction"><@spring.message "hap.new"/></span>
+                            <span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;" data-bind="click:saveFunction"><@spring.message "hap.save"/></span>
+                            <span onclick="deleteData()" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+                        </div>
+                    </div>
+
+
+                    <div id="mainGrid" style="margin-top: 10px;"></div>
+                </div>
+                <div class="tab-pane fade" style="margin-top: 20px;" id="other">
+                    <div style="margin-top: 20px;">
+                        <div id="otherGrid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    kendo.bind($('#page-content'), viewModel);
+
+    //    组织dataSource
+    var crudServiceBaseUrl = '${base.contextPath}'+'/sale/order',
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read    : {
+                url: crudServiceBaseUrl + "/queryLines?headerId=" + headerId,
+                type    : "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type === "read") {
+                    var map = viewModel.model.toJSON();
+                    map.start = (options.page - 1) * options.pageSize;
+                    map.size = options.pageSize;
+                    for (var k in map) {
+                        if (map[k] === '' || map[k] === null || map[k] === undefined)
+                            delete map[k]
+                    }
+                    return map;
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        serverSorting: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id:"lineId",
+                fields:{
+                    lineNumber:{type: "string"},
+                    itemCode:{type: "string"},
+                    itemDescription:{type: "string"},
+                    orderQuantityUom:{type: "string"},
+                    orderdQuantity:{type: "int"},
+                    unitSellingPrice:{type: "double"},
+                    orderAmount:{type:"double"}
+                }
+            }
+        }
+    });
+
+    //    组织Grid
+    var grid = $("#mainGrid").kendoGrid({
+        dataSource : dataSource,
+        navigatable: false,
+        height: '100%',
+        resizable: true,
+        scrollable: true,
+        /*selectable:"multiple,rowbox",*/
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        sortable: true,
+        columns    : [
+            {
+                field: "lineNumber",
+                title: '<@spring.message "sale.lineNumber"/>',
+                width: 30,
+                attributes: {style: "text-align:center"},
+                headerAttributes: { style: "text-align:center"}
+            },{
+                field: "itemCode",
+                title: '<@spring.message "sale.itemCode"/>',
+                width: 30,
+                attributes: {style: "text-align:center"},
+                headerAttributes: { style: "text-align:center"}
+            },
+            {
+                field: "itemDescription",
+                title: '<@spring.message "sale.itemDescription"/>',
+                width: 50,
+                headerAttributes: { style: "text-align:center"}
+            }, {
+                field : "orderdQuantity",
+                title : '<@spring.message "sale.orderedquantity"/>',
+                width : 50,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {
+                    "class": "table-header-cell",
+                    style  : "text-align: center"
+                }
+            },{
+                field : "orderQuantityUom",
+                title : '<@spring.message "sale.orderQuantityUom"/>',
+                width : 50,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {
+                    "class": "table-header-cell",
+                    style  : "text-align: center"
+                }
+            },{
+                field: "unitSellingPrice",
+                attributes: {style: "text-align:center"},
+                title: '<@spring.message "sale.unitSellingPrice"/>',
+                width: 50,
+                headerAttributes: {
+                    "class": "table-header-cell",
+                    style  : "text-align: center"
+                },
+                template: function(dataItem){
+                    kendo.culture("en-US");
+                    return kendo.toString(dataItem.unitSellingPrice, "c");
+                }
+            },{
+                field: "orderAmount",
+                title: '<@spring.message "sale.orderamount"/>',
+                width: 50,
+                headerAttributes: {
+                    "class": "table-header-cell",
+                    style  : "text-align: center"
+                },
+                template: function(dataItem){
+                    kendo.culture("en-US");
+                    return kendo.toString(dataItem.orderAmount, "c");
+                }
+            },{
+                field: "description",
+                attributes: {style: "text-align:center"},
+                title: '<@spring.message "hap.comment"/>',
+                width: 50,
+                headerAttributes: {
+                    "class": "table-header-cell",
+                    style  : "text-align: center"
+                }
+            }
+        ],
+        editable : 'inline'
+    }).data("kendoGrid");
+    Hap.autoResizeGrid("#mainGrid");
+
+
+
+
+
+
+
+    //验证
+    $("#mainform").kendoValidator({
+        messages: {
+            required: "required"
+        }
+    });
+    //日期
+    $(".datepicker").kendoDatePicker({
+        animation: false
+    });
+
+    function headerEditable(){
+        $('#orderNumber').attr('disabled','');
+        $('#companyName').attr('disabled','');
+        $('#customerName').attr('disabled','');
+        $('#orderDate').attr('disabled','');
+    }
+
+    function checkButtonPermission(){
+        $('span').attr('disabled','disabled');
+        $('button').attr('disabled','disabled');
+        $('print').attr('disabled','disabled');
+        var status = $('#orderStatus').data("kendoLov").value();
+        if(status == 'NEW'){
+            headerEditable();
+            $('#submit').attr('disabled','');
+            $('#newLine').attr('disabled','');
+            $('#reject').attr('disabled','');
+            $('#delete').attr('disabled','');
+        }else if(status == 'SUBMITED'){
+            $('#approve').attr('disabled','');
+            $('#reject').attr('disabled','');
+        }else {
+            headerEditable();
+            $('#newLine').attr('disabled','');
+            $('#submit').attr('disabled','');
+            $('#delete').attr('disabled','');
+        }
+    }
+</script>
+
+</body>
+</html>

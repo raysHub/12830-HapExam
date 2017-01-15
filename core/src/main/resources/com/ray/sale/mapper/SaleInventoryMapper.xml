@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ray.sale.mapper.SaleInventoryMapper">
+
+    <resultMap id="saleInventoryResultMap" type="com.ray.sale.dto.SaleInventory" extends="com.hand.hap.mapper.StdMapper.STD">
+        <result column="ITEM_CODE" property="itemCode"/>
+        <result column="ITEM_DESCRIPTION" property="itemDescription" />
+    </resultMap>
+    <select id="selectAllInventory" parameterType="com.ray.sale.dto.SaleInventory" resultMap="saleInventoryResultMap">
+        SELECT ITEM_CODE, ITEM_DESCRIPTION
+        FROM   hap_inv_inventory_items
+        WHERE  1=1
+        <if test="itemCode != null">
+            AND item_code LIKE concat('%', concat(#{itemCode}, '%'))
+        </if>
+        <if test="itemDescription != null">
+            AND item_description LIKE concat('%', concat(#{itemDescription}, '%'))
+        </if>
+    </select>
+
+</mapper>

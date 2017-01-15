@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ray.sale.mapper.OrderLineMapper">
+    <resultMap id="OrderLineResultMap" type="com.ray.sale.dto.OrderLine" extends="com.hand.hap.mapper.StdMapper.STD">
+        <result column="LINE_ID" property="lineId"/>
+        <result column="LINE_NUMBER" property="lineNumber" />
+        <result column="ITEM_CODE" property="itemCode" />
+        <result column="ITEM_DESCRIPTION" property="itemDescription"/>
+        <result column="ORDERD_QUANTITY" property="orderdQuantity"/>
+        <result column="ORDER_QUANTITY_UOM" property="orderQuantityUom"/>
+        <result column="UNIT_SELLING_PRICE" property="unitSellingPrice" />
+        <result column="ORDER_AMOUNT" property="orderAmount" />
+    </resultMap>
+
+    <select id="findLineInfo" parameterType="com.ray.sale.dto.OrderLine" resultMap="OrderLineResultMap">
+        SELECT
+            L.LINE_ID,L.LINE_NUMBER, I.ITEM_CODE, I.ITEM_DESCRIPTION, L.ORDERD_QUANTITY, L.ORDER_QUANTITY_UOM,
+            L.UNIT_SELLING_PRICE, L.ORDERD_QUANTITY*L.UNIT_SELLING_PRICE ORDER_AMOUNT, L.DESCRIPTION
+        FROM
+            hap_om_order_lines L,hap_inv_inventory_items I, hap_om_order_headers H
+        WHERE
+            L.INVENTORY_ITEM_ID = I.INVENTORY_ITEM_ID
+        AND
+            L.HEADER_ID = H.HEADER_ID
+            <if test=" headerId != null">
+                AND H.HEADER_ID = #{headerId}
+            </if>
+
+    </select>
+
+
+</mapper>

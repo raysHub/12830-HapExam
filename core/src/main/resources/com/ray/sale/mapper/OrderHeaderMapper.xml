@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ray.sale.mapper.OrderHeaderMapper">
+    <resultMap id="OrderResultMap" type="com.ray.sale.dto.OrderHeader" extends="com.hand.hap.mapper.StdMapper.STD">
+        <result column="HEADER_ID" property="headerId"/>
+        <result column="ORDER_NUMBER" property="orderNumber" />
+        <result column="COMPANY_NAME" property="companyName" />
+        <result column="COMPANY_NUMBER" property="companyNumber"/>
+        <result column="CUSTOMER_NUMBER" property="customerNumber"/>
+        <result column="ITEM_CODE" property="itemCode"/>
+        <result column="CUSTOMER_NAME" property="customerName" />
+        <result column="ORDER_DATE" property="orderDate" />
+        <result column="ORDER_STATUS" property="orderStatus" />
+        <result column="ORDER_AMOUNT" property="orderAmount" />
+    </resultMap>
+    <!--<update id="myUpdate" parameterType="OrderHeader">
+        UPDATE hbi_demo
+        SET tel = #{tel}, name=#{name}, object_version_number = object_version_number+1
+        WHERE id=#{id} AND object_version_number=#{objectVersionNumber}
+    </update>-->
+
+    <select id="findInfo" parameterType="com.ray.sale.dto.OrderHeader" resultMap="OrderResultMap">
+        SELECT
+            H.ORDER_NUMBER , CO.COMPANY_NAME , CO.COMPANY_NUMBER , CU.CUSTOMER_NAME , CU.CUSTOMER_NUMBER , H.ORDER_DATE,
+            I.ITEM_CODE , H.ORDER_STATUS , L.ORDERD_QUANTITY*L.UNIT_SELLING_PRICE ORDER_AMOUNT , H.HEADER_ID
+        FROM
+            hap_om_order_headers H, hap_org_companys CO,
+            hap_ar_customers CU, hap_om_order_lines L,hap_inv_inventory_items I
+        WHERE L.HEADER_ID = H.header_id
+            AND H.COMPANY_ID = CO.COMPANY_ID
+            AND H.CUSTOMER_ID = CU.CUSTOMER_ID
+            AND L.INVENTORY_ITEM_ID = I.INVENTORY_ITEM_ID
+            <if test="companyNumber != null ">
+                AND CO.COMPANY_NUMBER LIKE concat('%', concat(#{companyNumber}, '%'))
+            </if>
+            <if test="customerNumber != null">
+                AND CU.CUSTOMER_NUMBER LIKE concat('%', concat(#{customerNumber}, '%'))
+            </if>
+            <if test="orderNumber != null">
+                AND H.ORDER_NUMBER LIKE concat('%', concat(#{orderNumber}, '%'))
+            </if>
+            <if test="itemCode != null">
+                AND I.ITEM_CODE LIKE concat('%', concat(#{itemCode}, '%'))
+            </if>
+    </select>
+
+
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ray.sale.mapper.SaleCompanyMapper">
+
+    <resultMap id="saleCompanyResultMap" type="com.ray.sale.dto.SaleCompany" extends="com.hand.hap.mapper.StdMapper.STD">
+        <result column="COMPANY_NUMBER" property="companyNumber"/>
+        <result column="COMPANY_NAME" property="companyName" />
+    </resultMap>
+    <select id="selectAllCompany" parameterType="com.ray.sale.dto.SaleCompany" resultMap="saleCompanyResultMap">
+        SELECT company_number, company_name
+        FROM   hap_org_companys
+        WHERE  1=1
+        <if test="companyNumber != null">
+            AND company_number LIKE concat('%', concat(#{companyNumber}, '%'))
+        </if>
+        <if test="companyName != null">
+            AND company_name LIKE concat('%', concat(#{companyName}, '%'))
+        </if>
+    </select>
+
+</mapper>
